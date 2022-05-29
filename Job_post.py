@@ -31,9 +31,7 @@ def extractData(file,ext):
             text = text + str(page.getText())
         text = " ".join(text.split('\n'))
     return text
-@job_post.route("/")
-def home():
-    return "<h1>test</h1>"
+
 
 @job_post.route("/post_job")
 def JOB_POST():
@@ -68,7 +66,7 @@ def ADD_JOB():
         if result == None:
             return render_template("job_post.html",errorMsg="Error Ocuured")
         else:
-            return redirect('/HR1/post_job')
+            return redirect('/post_job')
             #return render_template("job_post.html",successMsg="Job Posted Successfully")
             
     except Exception:
@@ -91,7 +89,8 @@ def show_job():
 
 @job_post.route("/apply_job",methods=["POST"])
 def APPLY_JOB():
-    job_id = request.form['job_id']
+    req = request.get_json()
+    job_id = req['jId']
     jd_data = JOBS.find_one({"_id":ObjectId(job_id)},{"Job_Description":1})
     emp_data = resumeFetchedData.find_one({"UserId":ObjectId(session['user_id'])},{"ResumeData":1})
     match_percentage = job_compare_obj.match(str(jd_data['Job_Description']),str(emp_data['ResumeData']))
@@ -103,19 +102,23 @@ def APPLY_JOB():
 
 @job_post.route("/view_applied_candidates",methods=["POST","GET"])
 def view_applied_candidates():
-    job_id = request.form['job_id']
-    result_data = None
-    result_data = Applied_EMP.find({"job_id":ObjectId(job_id)},{"User_name":1,"Matching_percentage":1}).sort([("Matching_percentage",-1)])
-    if result_data == None:
-        return {"StatusCode":400,"Message":"Problem in Fetching"}
-    else:
-        result = {}
-        cnt = 0
-        result[0]=cnt
-        result[1]=200
-        for i in result_data:
-            result[cnt+2] = {"Name":i['User_name'],"Match":i['Matching_percentage']}
-            cnt+=1
-        result[0]=cnt
-        print("Result",result,type(result))
-        return result
+    if(request.method=="POST"):
+        req = request.get_json()
+        job_id = req['jId']
+        result_data = None
+        result_data = Applied_EMP.find({"job_id":ObjectId(job_id)},{"User_name":1,"Matching_percentage":1}).sort([("Matching_percentage",-1)])
+        if result_data == None:
+            return {"StatusCode":400,"Message":"Problem in Fetching"}
+        else:
+            result = {}
+            cnt = 0
+            result[0]=cnt
+            result[1]=200
+            for i in result_data:
+                result[cnt+2] = {"Name":i['User_name'],"Match":i['Matching_percentage']}
+                cnt+=1
+            result[0]=cnt
+            print("Result",result,type(result))
+        
+    
+    return result

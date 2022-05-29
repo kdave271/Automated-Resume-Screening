@@ -41,7 +41,7 @@ class resumeExtraction:
         resume_text_tokens = word_tokenize(resume_text)  # tokenize
         filtered_text = [w for w in resume_text_tokens if not w in self.STOPWORDS]  # remove stopwords
         return ' '.join(filtered_text)
-       
+    
     def __extract_name(self,resume_text):
         nlp_text = self.nlp(resume_text)
         pattern = [{'POS': 'PROPN'}, {'POS': 'PROPN'}]
@@ -96,38 +96,23 @@ class resumeExtraction:
     
     def __extract_skills(self,input_text):
         stop_words = set(stopwords.words('english'))
-        print("stop_words->>",stop_words)
-        print("input_text-->",input_text)
-        
         word_tokens = word_tokenize(input_text)
-        
-        print("word_tokens->>",word_tokens)
-        
         # remove the stop words
         filtered_tokens = [w for w in word_tokens if w not in stop_words]
-        print("filtered_tokens->>",filtered_tokens)
-
         # remove the punctuation
         filtered_tokens = [w for w in word_tokens if w.isalpha()]
-        print("filtered_tokens->>",filtered_tokens)
-
         # generate bigrams and trigrams (such as artificial intelligence)
         bigrams_trigrams = list(map(' '.join, nltk.everygrams(filtered_tokens, 2, 3)))
-        print("bigrams_trigrams->>",bigrams_trigrams)
-
         # we create a set to keep the results in.
         found_skills = set()
-
         # we search for each token in our skills database
         for token in filtered_tokens:
             if token.lower() in self.SKILLS_DB:
                 found_skills.add(token)
-
         # we search for each bigram and trigram in our skills database
         for ngram in bigrams_trigrams:
             if ngram.lower() in self.SKILLS_DB:
                 found_skills.add(ngram)
-
         return found_skills
     
     def extractorData(self,file,ext): #
@@ -144,18 +129,13 @@ class resumeExtraction:
         # print("text--->",text)
         text1=text
         name = self.__extract_name(text)
-        print("Name-->",name)
         mobile_no = self.__extract_mobile_number(text)
-        print("phone-->",mobile_no)
         email = self.__extract_email(text)
-        print("email-->",email)
         skills = self.__extract_skills(text)
-        print("Skills-->",skills)
         education1 = self.__extract_education(text)
-        print("education1-->",education1)
         return (name,mobile_no,email,skills,education1,text1)
 
 resumeExtractor = resumeExtraction()
 
-#print(resumeExtractor.extractorData(fitz.open('/home/pranav/Resumes/Pranav Vikharankar.pdf'),"pdf"))
+
 pickle.dump(resumeExtractor,open("resumeExtractor.pkl","wb"))

@@ -47,7 +47,7 @@ Ranked_resume = mongo.db.Ranked_resume
 IRS_USERS = mongo.db.IRS_USERS
 JOBS = mongo.db.JOBS
 from Job_post import job_post
-app.register_blueprint(job_post,url_prefix="/HR1")
+app.register_blueprint(job_post)
 extractorObj = pickle.load(open("resumeExtractor.pkl","rb"))
 screenerObj = pickle.load(open("resumeScreener.pkl","rb"))
 
@@ -136,19 +136,18 @@ def uploadResume():
                 print("UserId",session['user_id'])
                 temp = resumeFetchedData.find_one({"UserId":ObjectId(session['user_id'])},{"ResumeTitle":1})
                 if temp == None:
-                    print("HELLO")
+                    print("Failed to Fetch Data")
                 else:
-                    print("hello")
                     resumeFetchedData.delete_one({"UserId":ObjectId(session['user_id'])})
                     Ranked_resume.delete_one({"UserId":ObjectId(session['user_id'])})
                     os.remove(os.path.join(app.config['UPLOAD_FOLDER'],temp['ResumeTitle']))
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'],filename))
                 print("file save",file.filename.rsplit('.',1)[1].lower())
                 fetchedData=extractorObj.extractorData("static/resumes/"+filename,file.filename.rsplit('.',1)[1].lower())
-                print("file save2")
+                
                 skillsPercentage = screenerObj.screenResume(fetchedData[5])
                 result = result1 = None
-                print("FetchedData:",fetchedData)
+                
                 result = resumeFetchedData.insert_one({"UserId":ObjectId(session['user_id']),"Name":fetchedData[0],"Mobile_no":fetchedData[1],"Email":fetchedData[2],"Skills":list(fetchedData[3]),"Education":fetchedData[4],"Appear":0,"ResumeTitle":filename,"ResumeData":fetchedData[5]})                
                 if result == None:
                     return render_template("EmployeeDashboard.html",errorMsg="Problem in Resume Data Storage")  
@@ -166,8 +165,9 @@ def uploadResume():
         return render_template("index.html", errMsg="Login First")
 
 @app.route('/viewdetails', methods=['POST', 'GET'])
-def viewdetails():      
-    employee_id = request.form['employee_id']     
+def viewdetails():
+    req = request.get_json()      
+    employee_id = req['employee_id']     
     result = resumeFetchedData.find({"UserId":ObjectId(employee_id)})     
     dt=result[0]  
     name=dt['Name']
